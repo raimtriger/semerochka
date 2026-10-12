@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>СЕМЕРОЧКА</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jockey+One&family=Manrope:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000;
+  --ink:#fff;
+  --panel:#0d0d0d;
+  --panel-2:#161616;
+  --line:#262626;
+  --muted:#8a8a8a;
+  --muted-2:#5a5a5a;
+  --flip:0.62s;
+  --half:0.34s;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none !important}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:'Manrope',system-ui,sans-serif;
+  overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+body{min-height:100dvh;min-height:100vh}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
+.mono{font-variant-numeric:tabular-nums}
+.display{font-family:'Montserrat',sans-serif;font-weight:900;letter-spacing:-0.02em;text-transform:uppercase}
+
+/* ---------- LUDUS GAME brand lockup (Jockey One, 2 lines, left-aligned) ---------- */
+.ludus-lockup{display:flex;align-items:center;gap:11px}
+.ludus-lockup .man{width:var(--man,26px);height:auto;display:block;flex:0 0 auto}
+.ludus-lockup .wordmark{font-family:'Jockey One',sans-serif;
+  font-size:var(--lw,17px);line-height:.86;letter-spacing:.01em;text-transform:uppercase;
+  text-align:left}
+/* brand seven image */
+.seven-img{display:block}
+.seven-mark{height:22px;width:auto;display:block;-webkit-user-drag:none}
+
+/* ---------- APP SHELL ---------- */
+.app{position:relative;max-width:520px;margin:0 auto;min-height:100dvh;min-height:100vh;
+  display:flex;flex-direction:column}
+
+/* ---------- AGE GATE (inspired by the physical box) ---------- */
+.gate{position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;flex-direction:column;
+  padding:calc(20px + env(safe-area-inset-top)) 22px calc(18px + env(safe-area-inset-bottom));
+  overflow:hidden}
+
+/* top row */
+.gate-top{display:flex;align-items:flex-start;justify-content:space-between;
+  flex:0 0 auto}
+.gate-handles{display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+  font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted-2)}
+
+/* hero: vertical СЕМЕРОЧКА + giant 7 flush to the top, bleeding right */
+.gate-hero{flex:1 1 auto;position:relative;min-height:0;
+  margin:16px -22px 0 0;overflow:hidden}
+.hero-band{position:absolute;left:0;top:0;bottom:0;z-index:2;
+  display:flex;align-items:center;justify-content:flex-start}
+.hero-band span{writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:'Montserrat';font-weight:800;
+  font-size:clamp(26px,8.4vw,42px);letter-spacing:.02em;line-height:1;
+  text-transform:uppercase;white-space:nowrap}
+/* the 7 is anchored to the top-left of the hero and overflows right/bottom */
+.hero-seven{position:absolute;top:0;left:14%;
+  width:104%;height:100%;max-width:none;
+  object-fit:cover;object-position:left top;
+  user-select:none;-webkit-user-drag:none}
+
+/* tagline */
+.gate-tagline{font-family:'Manrope';font-size:12.5px;font-weight:700;line-height:1.45;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink);
+  margin:18px 0 0;flex:0 0 auto}
+
+/* spec row (40 мин / 18+ / 3-8) */
+.gate-specs{display:flex;align-items:center;gap:26px;margin-top:16px;flex:0 0 auto;
+  padding-top:16px;border-top:1px solid var(--line)}
+.spec{display:flex;align-items:center;gap:8px;color:var(--ink)}
+.spec svg{width:17px;height:17px;flex:0 0 auto}
+.spec b{font-size:12px;font-weight:700;letter-spacing:.06em}
+
+/* footer */
+.gate-foot{margin-top:20px;width:100%;flex:0 0 auto}
+.gate-warn{color:var(--muted-2);font-size:11px;line-height:1.5;margin:0 0 14px;
+  letter-spacing:.02em}
+.btn{width:100%;padding:19px;border-radius:15px;font-weight:700;font-size:16.5px;
+  transition:transform .15s var(--ease),background .2s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--ink);color:#000}
+.btn-ghost{background:var(--panel-2);color:var(--ink);border:1px solid var(--line)}
+.gate-deny{margin-top:10px;color:var(--muted-2);font-size:13px;font-weight:500;
+  background:none;width:100%;padding:8px}
+
+/* short screens */
+@media (max-height:700px){
+  .gate-tagline{font-size:11.5px;margin-top:14px}
+  .gate-specs{gap:18px;margin-top:12px;padding-top:12px}
+  .gate-warn{font-size:10.5px;margin-bottom:11px}
+  .btn{padding:16px;font-size:15.5px}
+}
+
+
+/* ---------- SETUP SCREEN ---------- */
+.setup{position:fixed;inset:0;z-index:90;background:var(--bg);max-width:520px;margin:0 auto;
+  display:flex;flex-direction:column}
+.setup-top{display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px 10px}
+.setup-top .brand{display:flex;align-items:center;gap:9px}
+.setup-top .brand svg{width:22px;height:22px}
+.setup-top .brand b{font-family:'Montserrat';font-weight:800;font-size:12px;letter-spacing:.06em}
+.setup-body{flex:1;overflow-y:auto;padding:12px 22px 20px;-webkit-overflow-scrolling:touch}
+.setup-h{font-family:'Montserrat';font-weight:900;font-size:26px;letter-spacing:-.01em;
+  text-transform:uppercase;margin:0 0 4px}
+.setup-h.mt{margin-top:32px}
+.setup-hint{color:var(--muted);font-size:13.5px;margin:0 0 16px;font-weight:500}
+.setup-foot{padding:14px 22px calc(18px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:var(--panel)}
+.seg{display:flex;gap:8px;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:14px;padding:5px}
+.seg-btn{flex:1;padding:13px 8px;border-radius:10px;font-weight:700;font-size:14px;
+  color:var(--muted);transition:background .2s,color .2s;text-align:center}
+.seg-btn.active{background:var(--ink);color:#000}
+.setup .player-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.setup .player-row input{flex:1;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:12px;padding:15px 15px;color:var(--ink);font-size:16px;font-weight:600;
+  font-family:inherit}
+.setup .player-row input:focus{outline:none;border-color:var(--muted)}
+.setup .player-row .drag{width:28px;color:var(--muted-2);font-size:18px;text-align:center;
+  flex:0 0 auto;cursor:grab;user-select:none}
+.setup .player-row .del{width:44px;height:48px;border-radius:11px;background:var(--panel-2);
+  display:grid;place-items:center;color:var(--muted);font-size:18px;flex:0 0 auto}
+.setup .add-player{margin-top:2px}
+.setup .player-row.dragging{opacity:.5}
+
+/* ---------- CREDITS (setup bottom) ---------- */
+.credits{margin-top:44px;padding-top:26px;border-top:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.credits-lockup{display:flex;align-items:center;gap:9px;opacity:.85}
+.credits-lockup .man{width:16px;height:auto;display:block}
+.credits-lockup .wordmark{font-family:'Jockey One',sans-serif;font-size:14px;
+  line-height:.86;letter-spacing:.01em;text-transform:uppercase;text-align:left}
+.credits-title{font-size:10.5px;font-weight:700;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted-2)}
+.credits-list{display:flex;flex-direction:column;gap:7px}
+.credits-list span{font-size:14px;font-weight:600;color:var(--muted);letter-spacing:.01em}
+
+
+/* ---------- TOP BAR ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;position:sticky;top:0;z-index:20;
+  background:linear-gradient(#000 70%,transparent)}
+.topbar .brand{display:flex;align-items:center;gap:9px}
+.topbar .brand svg{width:22px;height:22px}
+.topbar .brand b{font-family:'Montserrat';font-weight:800;font-size:12px;letter-spacing:.06em}
+.icon-btn{width:42px;height:42px;border-radius:12px;background:var(--panel-2);
+  border:1px solid var(--line);display:grid;place-items:center;transition:transform .15s}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn svg{width:20px;height:20px}
+
+/* ---------- DECK PROGRESS ---------- */
+.progress-wrap{padding:2px 18px 10px}
+.progress-meta{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:7px}
+.progress-meta .left{font-size:12px;font-weight:600;letter-spacing:.08em;
+  color:var(--muted);text-transform:uppercase}
+.progress-meta .right{font-family:'Montserrat';font-weight:800;font-size:13px;
+  color:var(--ink)}
+.progress-meta .right .sep{color:var(--muted-2)}
+.bar{height:5px;border-radius:99px;background:var(--panel-2);overflow:hidden}
+.bar > i{display:block;height:100%;background:var(--ink);border-radius:99px;
+  transition:width .45s var(--ease);width:100%}
+
+/* ---------- STAGE / CARD ---------- */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:8px 24px 16px;position:relative}
+.card-shadow{width:min(74vw,300px);aspect-ratio:719/1007;
+  perspective:1400px;-webkit-perspective:1400px;
+  filter:drop-shadow(0 26px 55px rgba(0,0,0,.6))}
+/* Smooth true card flip. Forward: 0 -> 90 (swap) -> 0.
+   Reverse: 0 -> -90 (swap) -> 0. Linear-ish easing = real rotation feel. */
+.card{position:relative;width:100%;height:100%;cursor:pointer;
+  transform:rotateY(0deg);
+  transition:transform var(--half) cubic-bezier(.42,0,.58,1)}
+.card.to-edge{transform:rotateY(90deg)}
+.card.to-edge-rev{transform:rotateY(-90deg)}
+.card.from-edge{transition:none;transform:rotateY(-90deg)}
+.card.from-edge-rev{transition:none;transform:rotateY(90deg)}
+.card.fade-in{animation:cardIn .4s ease both}
+@keyframes cardIn{from{opacity:0}to{opacity:1}}
+.face{position:absolute;inset:0;border-radius:22px;overflow:hidden}
+.face img{width:100%;height:100%;object-fit:cover;display:block}
+.card-back{display:block}
+.card-front{display:none}
+.card.showing-front .card-back{display:none}
+.card.showing-front .card-front{display:block}
+
+/* Правила card rendered in CSS */
+.pravila-face{background:var(--ink);color:#000;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:26px;text-align:center;gap:16px;
+  border-radius:22px;overflow:hidden}
+.pravila-face .qmark{width:70px;height:70px;border-radius:50%;border:4px solid #000;
+  display:grid;place-items:center;font-family:'Montserrat';font-weight:900;font-size:40px}
+.pravila-face .pt{font-family:'Montserrat';font-weight:900;font-size:26px;letter-spacing:-.01em}
+.pravila-face .pd{font-size:13px;font-weight:600;line-height:1.4;max-width:200px}
+.pravila-face .pbtn{margin-top:6px;padding:12px 22px;background:#000;color:#fff;
+  border-radius:12px;font-weight:700;font-size:14px}
+
+
+/* ---------- ACTION CARD OVERLAY (drawn card meaning) ---------- */
+.action-badge{position:absolute;top:14px;left:14px;z-index:3;
+  padding:6px 11px;border-radius:99px;font-size:11px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.action-badge.t-instant{background:rgba(255,255,255,.12);color:#fff}
+.action-badge.t-burn{background:#fff;color:#000}
+.action-badge.t-permanent{background:#fff;color:#000;
+  box-shadow:0 0 0 2px #000,0 0 0 4px #fff}
+.action-badge svg{width:12px;height:12px}
+
+/* ---------- CTA ROW ---------- */
+/* Fixed slot heights: the card and the name never move.
+   Only the description text fades in/out inside its reserved space. */
+.cta-row{padding:12px 18px calc(16px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;align-items:center;flex:0 0 auto}
+.card-caption{text-align:center;padding:0 8px;width:100%;
+  display:flex;flex-direction:column;align-items:center}
+.cc-type{height:15px;line-height:15px;font-size:11px;font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted-2);
+  visibility:hidden;transition:opacity .25s;opacity:0}
+.cc-type.show{visibility:visible;opacity:1}
+.cc-type.burn,.cc-type.permanent{color:#fff}
+.card-caption .cc-name{font-family:'Montserrat';font-weight:800;font-size:24px;
+  letter-spacing:.01em;text-transform:uppercase;line-height:1.1;
+  height:30px;display:flex;align-items:center;justify-content:center;margin-top:8px}
+.tap-hint{height:16px;line-height:16px;font-size:12px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted-2);transition:opacity .3s;margin-top:14px}
+.tap-hint.hide{opacity:0}
+
+/* ---------- PLAYER STRIP ---------- */
+.players-strip{border-top:1px solid var(--line);background:var(--panel);
+  padding:12px 0 calc(10px + env(safe-area-inset-bottom))}
+.ps-head{display:flex;align-items:center;justify-content:space-between;padding:0 18px 10px}
+.ps-head .t{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted);
+  text-transform:uppercase}
+.ps-head button{font-size:12px;font-weight:700;color:var(--ink);
+  background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:6px 12px}
+.ps-scroll{display:flex;gap:10px;overflow-x:auto;padding:0 18px 2px;
+  scrollbar-width:none}
+.ps-scroll::-webkit-scrollbar{display:none}
+.pchip{flex:0 0 auto;min-width:78px;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:14px;padding:10px 12px;position:relative;transition:transform .15s,border-color .2s}
+.pchip.active-turn{border-color:var(--ink)}
+.pchip:active{transform:scale(.96)}
+.pchip .pn{font-weight:700;font-size:14px;white-space:nowrap;max-width:120px;
+  overflow:hidden;text-overflow:ellipsis}
+.pchip .ph{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;min-height:20px}
+.pchip .ph:empty::after{content:"—";color:var(--muted-2);font-size:12px}
+.hand-icon{width:20px;height:20px;border-radius:6px;background:var(--ink);
+  display:grid;place-items:center;position:relative}
+.hand-icon img{width:15px;height:15px;object-fit:contain;
+  filter:invert(1)}
+.hand-icon.permanent{box-shadow:0 0 0 2px var(--ink)}
+.hand-icon.waiting{opacity:.5}
+.turn-dot{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;
+  background:var(--ink)}
+
+
+/* ---------- SHEETS / MODALS ---------- */
+.scrim{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);
+  opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px)}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;max-width:520px;margin:0 auto;
+  background:var(--panel);border-radius:24px 24px 0 0;border:1px solid var(--line);
+  border-bottom:none;transform:translateY(101%);transition:transform .34s var(--ease);
+  max-height:88dvh;max-height:88vh;display:flex;flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom)}
+.sheet.show{transform:translateY(0)}
+.sheet-grip{width:38px;height:4px;border-radius:99px;background:var(--line);
+  margin:12px auto 4px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 20px 14px}
+.sheet-head h2{font-family:'Montserrat';font-weight:900;font-size:22px;margin:0;
+  text-transform:uppercase;letter-spacing:-.01em}
+.sheet-head .x{width:36px;height:36px;border-radius:10px;background:var(--panel-2);
+  display:grid;place-items:center;font-size:18px}
+.sheet-body{overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch}
+
+/* players editor */
+.player-row{display:flex;align-items:center;gap:10px;padding:10px 0;
+  border-bottom:1px solid var(--line)}
+.player-row input{flex:1;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:11px;padding:13px 14px;color:var(--ink);font-size:15px;font-weight:600;
+  font-family:inherit}
+.player-row input:focus{outline:none;border-color:var(--muted)}
+.player-row .del{width:40px;height:40px;border-radius:10px;background:var(--panel-2);
+  display:grid;place-items:center;color:var(--muted);font-size:18px;flex:0 0 auto}
+.add-player{margin-top:14px;width:100%;padding:15px;border-radius:13px;
+  background:var(--panel-2);border:1px dashed var(--line);color:var(--ink);
+  font-weight:700;font-size:14px}
+
+/* choose-player list (for Связка / Жулик) */
+.choose-list{display:flex;flex-direction:column;gap:8px}
+.choose-item{display:flex;align-items:center;justify-content:space-between;
+  padding:15px 16px;border-radius:13px;background:var(--panel-2);border:1px solid var(--line);
+  font-weight:700;font-size:16px;transition:transform .12s}
+.choose-item:active{transform:scale(.98)}
+.choose-item .sub{font-size:12px;color:var(--muted);font-weight:500}
+.choose-item.disabled{opacity:.4;pointer-events:none}
+.choose-cards{display:flex;gap:6px}
+
+/* rules content */
+.rules-block{margin-bottom:22px}
+.rules-block h3{font-family:'Montserrat';font-weight:800;font-size:15px;
+  text-transform:uppercase;letter-spacing:.02em;margin:0 0 8px;
+  display:flex;align-items:center;gap:8px}
+.rules-block h3 .tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;
+  letter-spacing:.04em}
+.tag.i{background:rgba(255,255,255,.12)}
+.tag.b{background:#fff;color:#000}
+.tag.p{background:#fff;color:#000;box-shadow:0 0 0 2px #000,0 0 0 3px #fff}
+.rules-block p{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 6px}
+.rules-list{list-style:none;padding:0;margin:0}
+.rules-list li{padding:11px 0;border-bottom:1px solid var(--line);
+  display:flex;gap:12px;align-items:baseline}
+.rules-list li b{font-family:'Montserrat';font-weight:800;font-size:13px;
+  min-width:96px;text-transform:uppercase;flex:0 0 auto}
+.rules-list li span{color:var(--muted);font-size:13px;line-height:1.45}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));
+  transform:translate(-50%,20px);z-index:80;
+  background:var(--ink);color:#000;padding:13px 20px;border-radius:14px;
+  font-weight:700;font-size:14px;opacity:0;pointer-events:none;
+  transition:opacity .3s,transform .3s;max-width:88vw;text-align:center;
+  box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* pair popup (Поцелуй) */
+.popup{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:28px;
+  background:rgba(0,0,0,.82);opacity:0;pointer-events:none;transition:opacity .3s;
+  backdrop-filter:blur(4px)}
+.popup.show{opacity:1;pointer-events:auto}
+.popup-card{background:var(--panel);border:1px solid var(--line);border-radius:22px;
+  padding:32px 26px;text-align:center;max-width:340px;width:100%;
+  transform:scale(.9);transition:transform .3s var(--ease)}
+.popup.show .popup-card{transform:scale(1)}
+.popup-card .big{font-family:'Montserrat';font-weight:900;font-size:clamp(28px,9vw,40px);
+  line-height:.95;text-transform:uppercase;margin:10px 0}
+.popup-card .em{font-size:44px;margin-bottom:4px}
+.popup-card p{color:var(--muted);font-size:14px;line-height:1.5;margin:6px 0 22px}
+.popup-card b{color:var(--ink)}
+.popup-card .pbtn{width:100%;padding:16px;border-radius:14px;background:var(--ink);
+  color:#000;font-weight:700;font-size:15px}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition-duration:.01ms !important;animation-duration:.01ms !important}
+  .card{transition:transform .01ms}
+}
+</style>
+</head>
+
+<body>
+
+<!-- SVG symbol: LUDUS little-man logo -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ludus-man" viewBox="0 0 100 100">
+    <circle cx="70" cy="22" r="12" fill="currentColor"/>
+    <path d="M50 40 h40 a4 4 0 0 1 4 6 l-20 30 a6 6 0 0 1-10 0 v18 a5 5 0 0 1-10 0 v-18 l-20-30 a4 4 0 0 1 4-6 z" fill="currentColor" transform="translate(-20,0)"/>
+  </symbol>
+</svg>
+
+<!-- ========== AGE GATE (box-inspired) ========== -->
+<div class="gate" id="gate">
+
+  <!-- top row: LUDUS lockup + creator handles -->
+  <div class="gate-top">
+    <div class="ludus-lockup" style="--man:19px;--lw:16px">
+      <img class="man" src="" data-brand="ludus_man_white" alt="LUDUS GAME">
+      <div class="wordmark">LUDUS<br>GAME</div>
+    </div>
+    <div class="gate-handles">
+      <span>@sergeevbrothers</span>
+      <span>@raimtriger</span>
+      <span>@suebelon</span>
+    </div>
+  </div>
+
+  <!-- hero: vertical СЕМЕРОЧКА band + giant 7 -->
+  <div class="gate-hero">
+    <div class="hero-band"><span>СЕМЕРОЧКА</span></div>
+    <img class="hero-seven" src="" data-brand="seven_hero" alt="7">
+  </div>
+
+  <!-- tagline -->
+  <p class="gate-tagline">Семёрочка — пожалуй,<br>лучшая карточная игра<br>на алкоголь</p>
+
+  <!-- spec icons like the box side panel -->
+  <div class="gate-specs">
+    <div class="spec">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 2h12M6 22h12M7 2c0 5 10 5 10 0M7 22c0-5 10-5 10 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M7.5 3.5h9L12 11 7.5 3.5zM7.5 20.5h9L12 13l-4.5 7.5z" fill="currentColor"/>
+      </svg>
+      <b>40 мин</b>
+    </div>
+    <div class="spec">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 3h10v5a5 5 0 0 1-10 0V3z" fill="currentColor"/>
+        <path d="M12 13v6M8.5 19.5h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <b>18+</b>
+    </div>
+    <div class="spec">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="8" cy="5" r="2.2" fill="currentColor"/>
+        <circle cx="16" cy="5" r="2.2" fill="currentColor"/>
+        <path d="M4.5 9.5h7v7l-1.5 4h-1l-.5-4-.5 4h-1L4.5 16.5v-7zM12.5 9.5h7v7L18 20.5h-1l-.5-4-.5 4h-1l-1.5-4v-7z" fill="currentColor"/>
+      </svg>
+      <b>3–8</b>
+    </div>
+  </div>
+
+  <!-- footer: age warning + CTA -->
+  <div class="gate-foot">
+    <p class="gate-warn">Игра содержит задания, связанные с употреблением алкоголя. Продолжая, вы подтверждаете, что вам исполнилось 18 лет. Играйте ответственно.</p>
+    <button class="btn btn-primary" id="gateYes">Мне есть 18 — играть</button>
+    <button class="gate-deny" id="gateNo">Мне ещё нет 18</button>
+  </div>
+
+</div>
+
+
+<!-- ========== SETUP ========== -->
+<div class="setup" id="setup" hidden>
+  <div class="setup-top">
+    <div class="brand">
+      <img class="seven-mark" src="" data-brand="seven_white" alt="7">
+      <b>СЕМЕРОЧКА</b>
+    </div>
+    <button class="icon-btn" id="setupRules" aria-label="Правила">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .8-1 1.7"/><path d="M12 17h.01"/></svg>
+    </button>
+  </div>
+  <div class="setup-body">
+    <h2 class="setup-h">Игроки</h2>
+    <p class="setup-hint">Добавь минимум двух игроков — впиши имена</p>
+    <div id="setupRows"></div>
+    <button class="add-player" id="setupAdd">+ Добавить игрока</button>
+
+    <h2 class="setup-h mt">Порядок хода</h2>
+    <div class="seg" id="segOrder">
+      <button class="seg-btn active" data-val="circle">По кругу</button>
+      <button class="seg-btn" data-val="random">Случайно</button>
+    </div>
+
+    <h2 class="setup-h mt">Длина партии</h2>
+    <div class="seg" id="segLen">
+      <button class="seg-btn" data-val="20">20 карт</button>
+      <button class="seg-btn" data-val="40">40 карт</button>
+      <button class="seg-btn active" data-val="all">Вся колода</button>
+    </div>
+
+    <div class="credits">
+      <div class="credits-lockup">
+        <img class="man" src="" data-brand="ludus_man_white" alt="">
+        <div class="wordmark">LUDUS<br>GAME</div>
+      </div>
+      <div class="credits-title">Создатели игры</div>
+      <div class="credits-list">
+        <span>@raimtriger</span>
+        <span>@suebelon</span>
+        <span>@sergeevbrothers</span>
+      </div>
+    </div>
+  </div>
+  <div class="setup-foot">
+    <button class="cta-primary" id="startBtn">Поехали</button>
+  </div>
+</div>
+
+<!-- ========== APP ========== -->
+<div class="app" id="app" hidden>
+  <div class="topbar">
+    <div class="brand">
+      <img class="seven-mark" src="" data-brand="seven_white" alt="7">
+      <b>СЕМЕРОЧКА</b>
+    </div>
+    <button class="icon-btn" id="openRules" aria-label="Правила">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .8-1 1.7"/><path d="M12 17h.01"/></svg>
+    </button>
+  </div>
+
+  <div class="stage">
+    <div class="card-shadow">
+      <div class="card" id="card">
+        <div class="face card-back">
+          <img id="backImg" alt="Рубашка карты">
+        </div>
+        <div class="face card-front" id="cardFront">
+          <!-- filled dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-row">
+    <div class="card-caption" id="caption">
+      <div class="cc-type" id="capType"></div>
+      <div class="cc-name" id="capName">Нажми на карту</div>
+    </div>
+    <div class="tap-hint" id="tapHint">Тапни по карте</div>
+  </div>
+
+  <div class="players-strip">
+    <div class="ps-head">
+      <span class="t">Игроки и карты на руках</span>
+      <button id="editPlayers">Изменить</button>
+    </div>
+    <div class="ps-scroll" id="playerStrip"></div>
+  </div>
+</div>
+
+<!-- ========== TOAST ========== -->
+<div class="toast" id="toast"></div>
+
+
+<!-- ========== SCRIM + SHEETS ========== -->
+<div class="scrim" id="scrim"></div>
+
+<!-- Players editor sheet -->
+<div class="sheet" id="playersSheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head">
+    <h2>Игроки</h2>
+    <button class="x" data-close>✕</button>
+  </div>
+  <div class="sheet-body">
+    <div id="playerRows"></div>
+    <button class="add-player" id="addPlayer">+ Добавить игрока</button>
+  </div>
+</div>
+
+<!-- Choose player/card sheet (Связка / Жулик) -->
+<div class="sheet" id="chooseSheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head">
+    <h2 id="chooseTitle">Выбор</h2>
+    <button class="x" data-close>✕</button>
+  </div>
+  <div class="sheet-body">
+    <p id="chooseHint" style="color:var(--muted);font-size:13.5px;margin:0 0 14px;line-height:1.5"></p>
+    <div class="choose-list" id="chooseList"></div>
+  </div>
+</div>
+
+<!-- Hand card sheet (view/burn a held card) -->
+<div class="sheet" id="handSheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head">
+    <h2 id="handTitle">Карта</h2>
+    <button class="x" data-close>✕</button>
+  </div>
+  <div class="sheet-body">
+    <p id="handOwner" style="color:var(--muted);font-size:13px;margin:0 0 6px;font-weight:600"></p>
+    <p id="handText" style="font-size:15px;line-height:1.5;margin:0 0 18px"></p>
+    <button class="cta-primary" id="burnBtn" style="background:#fff">Сбросить карту</button>
+    <p id="handPermNote" style="color:var(--muted-2);font-size:12px;text-align:center;margin:12px 0 0" hidden>Несгораемая карта — остаётся до конца партии</p>
+  </div>
+</div>
+
+<!-- Rules sheet -->
+<div class="sheet" id="rulesSheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head">
+    <h2>Правила</h2>
+    <button class="x" data-close>✕</button>
+  </div>
+  <div class="sheet-body" id="rulesBody"></div>
+</div>
+
+<!-- ========== PAIR POPUP (Поцелуй) ========== -->
+<div class="popup" id="pairPopup">
+  <div class="popup-card">
+    <div class="em">💋</div>
+    <div class="big">Поцелуй</div>
+    <p id="pairText"></p>
+    <button class="pbtn" id="pairOk">Готово</button>
+  </div>
+</div>
+
+<script>
+const ASSETS = {"card_back": "assets/card_back.webp", "deystvie": "assets/deystvie.webp", "glyadelki": "assets/glyadelki.webp", "ideya": "assets/ideya.webp", "lesh": "assets/lesh.webp", "ludus": "assets/ludus.webp", "pereryv": "assets/pereryv.webp", "podlyanka": "assets/podlyanka.webp", "podvoh": "assets/podvoh.webp", "potseluy": "assets/potseluy.webp", "pravda": "assets/pravda.webp", "prezent": "assets/prezent.webp", "rytsar": "assets/rytsar.webp", "ryumka": "assets/ryumka.webp", "semerochka": "assets/semerochka.webp", "shchit": "assets/shchit.webp", "svyazka": "assets/svyazka.webp", "tost": "assets/tost.webp", "vybor": "assets/vybor.webp", "zhulik": "assets/zhulik.webp", "seven_white": "assets/seven_white.webp", "ludus_man_white": "assets/ludus_man_white.webp", "seven_hero": "assets/seven_hero.webp"};
+</script>
+<script>
+// Card type definitions and deck composition (64 cards, Презент removed)
+const CARD_DEFS = {
+  ryumka:     { name: "РЮМКА",     type: "instant",   text: "Вытянул эту карту — пьёшь", count: 8 },
+  vybor:      { name: "ВЫБОР",     type: "instant",   text: "Выбери того, кто будет пить", count: 6 },
+  pereryv:    { name: "ПЕРЕРЫВ",   type: "burn",      text: "Можешь ненадолго выйти из игры", count: 4 },
+  lesh:       { name: "ЛЕЩ",       type: "instant",   text: "Все игроки должны ударить себя по щеке, кто ударил последним — пьёт", count: 6 },
+  semerochka: { name: "СЕМЁРОЧКА", type: "instant",   text: "Все игроки считают по очереди, пропуская числа кратные 7 и числа, в которых есть цифра 7. Кто ошибся — пьёт", count: 4 },
+  svyazka:    { name: "СВЯЗКА",    type: "permanent", text: "Выбери игрока, с которым будешь пить на пару до конца игры", count: 1, pick: true },
+  pravda:     { name: "ПРАВДА",    type: "instant",   text: "Ответь на один вопрос от любого из игроков. Не хочешь отвечать — пьёшь", count: 3 },
+  deystvie:   { name: "ДЕЙСТВИЕ",  type: "instant",   text: "Выполни одно задание от любого из игроков. Не хочешь выполнять — пьёшь", count: 3 },
+  ideya:      { name: "ИДЕЯ",      type: "instant",   text: "Придумай действие. Всю дальнейшую игру, каждому, перед тем как выпить, нужно выполнить это действие", count: 4 },
+  shchit:     { name: "ЩИТ",       type: "burn",      text: "Разовая защита от алкоголя", count: 6 },
+  glyadelki:  { name: "ГЛЯДЕЛКИ",  type: "burn",      text: "Пока на руках эта карта, никто не должен смотреть тебе в глаза. Посмотрел — пьёт", count: 4 },
+  podvoh:     { name: "ПОДВОХ",    type: "burn",      text: "Пока на руках эта карта, никто не должен отвечать на твой вопрос. Ответил — пьёт", count: 4 },
+  podlyanka:  { name: "ПОДЛЯНКА",  type: "instant",   text: "Все карты «Щит» на руках у игроков идут в сброс", count: 1, trigger: "clear_shields" },
+  zhulik:     { name: "ЖУЛИК",     type: "instant",   text: "Забери себе одну карту с руки у любого игрока", count: 2, trigger: "steal" },
+  potseluy:   { name: "ПОЦЕЛУЙ",   type: "permanent", text: "Поцелуй игрока, у которого такая же карта. Если не хочешь — пьёшь дважды", count: 2, pair: true },
+  tost:       { name: "ТОСТ",      type: "instant",   text: "Произнеси тост. Пьют все (карта «Щит» не работает)", count: 2 },
+  ludus:      { name: "LUDUS",     type: "instant",   text: "Карта от создателя. Придумай новое правило игры или отмени одно из существующих", count: 1 },
+  rytsar:     { name: "РЫЦАРЬ",    type: "burn",      text: "В любой момент ты можешь выпить за любого игрока его напиток", count: 2 }
+  // pravila (Правила) rendered as CSS card, +1 = 64
+};
+
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------------- STATE ---------------- */
+const S = {
+  players: [],        // {id, name, hand:[{uid, key}]}
+  deck: [],           // array of card keys (shuffled)
+  drawn: 0,
+  total: 0,
+  current: null,      // current drawn card {key, def} or null
+  flipped: false,
+  turnIdx: 0,         // whose turn (index into players)
+  pendingKiss: null,  // {playerId} waiting for the 2nd Поцелуй
+  uidSeq: 1
+};
+
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+/* ---------------- ASSETS ---------------- */
+$('#backImg').src = ASSETS.card_back;
+// populate brand images (LUDUS man, seven logo)
+document.querySelectorAll('[data-brand]').forEach(el=>{
+  const k=el.getAttribute('data-brand');
+  if(ASSETS[k]) el.src=ASSETS[k];
+});
+
+/* ---------------- DECK BUILD ---------------- */
+function buildDeck(){
+  const arr = [];
+  for(const [key,def] of Object.entries(CARD_DEFS)){
+    for(let i=0;i<def.count;i++) arr.push(key);
+  }
+  arr.push("pravila"); // the CSS-rendered rules card, count 1 => 64
+  // Fisher-Yates
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  S.deck = arr;
+  S.total = arr.length;
+  S.drawn = 0;
+  updateProgress();
+}
+
+function updateProgress(){
+  // deck counter UI removed — kept as a safe no-op
+  const a=$('#pDrawn'), b=$('#pTotal'), c=$('#pBar');
+  if(!a||!b||!c) return;
+  a.textContent = S.drawn;
+  b.textContent = S.total;
+  const pct = S.total ? ((S.total - S.drawn)/S.total*100) : 100;
+  c.style.width = pct + "%";
+}
+
+/* ---------------- CARD RENDER ---------------- */
+function defFor(key){
+  if(key==="pravila") return {name:"ПРАВИЛА",type:"rules",text:"Правила игры"};
+  return CARD_DEFS[key];
+}
+
+function renderFront(key){
+  const front = $('#cardFront');
+  const def = defFor(key);
+  if(key==="pravila"){
+    front.classList.add('pravila-face');
+    front.innerHTML =
+      '<div class="qmark">?</div>'+
+      '<div class="pt">Правила</div>'+
+      '<div class="pd">Как играть в Семерочку — все типы карт и механики</div>'+
+      '<button class="pbtn" id="pravilaOpen">Открыть правила</button>';
+    return;
+  }
+  front.classList.remove('pravila-face');
+  front.innerHTML =
+    '<img src="'+ASSETS[key]+'" alt="'+def.name+'">';
+}
+
+function typeLabel(type){
+  return ({instant:"обычная", burn:"сгораемая", permanent:"несгораемая"})[type] || "";
+}
+
+
+/* ---------------- DRAW / FLIP FLOW ---------------- */
+const cardEl = $('#card');
+
+const HALF = 340; // ms, matches --half
+
+/* Prepare the next card (back facing up), no animation jump */
+function dealNewCard(){
+  if(S.drawn >= S.total){
+    toast("Колода закончилась — тасуем заново 🔄");
+    buildDeck();
+    if(setupState && setupState.len!=="all"){
+      const cap=Math.min(+setupState.len, S.deck.length);
+      S.deck=S.deck.slice(0,cap); S.total=S.deck.length;
+    }
+  }
+  S.current = null;
+  S.flipped = false;
+  S.busy = false;
+  cardEl.className='card';
+  $('#cardFront').classList.remove('pravila-face');
+  $('#cardFront').innerHTML='';
+  $('#capType').className='cc-type'; $('#capType').textContent='';
+  $('#capName').textContent = currentPlayerName() ? ("Ход: "+currentPlayerName()) : "Нажми на карту";
+  const th=$('#tapHint'); if(th){ th.textContent="Тапни по карте"; th.classList.remove('hide'); }
+}
+
+/* Forward flip: back -> front */
+function flipCard(){
+  if(S.flipped || S.busy) return;
+  S.busy = true;
+  if(S.drawn >= S.total){ buildDeck(); }
+  const key = S.deck[S.drawn];
+  S.drawn++;
+  S.current = { key, def: defFor(key) };
+
+  // rotate to edge
+  cardEl.classList.add('to-edge');
+
+  setTimeout(()=>{
+    // at edge: swap face, jump to opposite edge without transition, then rotate home
+    renderFront(key);
+    cardEl.classList.remove('to-edge');
+    cardEl.classList.add('showing-front','from-edge');
+    void cardEl.offsetWidth;          // commit the jump
+    cardEl.classList.remove('from-edge');
+    S.flipped = true;
+  }, HALF);
+
+  setTimeout(()=>{
+    const d = S.current.def;
+    const ct=$('#capType');
+    if(key==="pravila"){ ct.className='cc-type'; }
+    else { ct.textContent=typeLabel(d.type);
+      ct.className='cc-type show'+(d.type==='burn'?' burn':(d.type==='permanent'?' permanent':'')); }
+    $('#capName').textContent = d.name;
+    const th=$('#tapHint'); if(th){ th.textContent="Тапни ещё раз — следующий игрок"; }
+    S.busy = false;
+    if(key==="pravila"){
+      const b=$('#pravilaOpen'); if(b) b.onclick=(e)=>{e.stopPropagation();openSheet('rulesSheet');};
+    } else {
+      handleCardEffect(key, d);
+    }
+  }, HALF*2 + 20);
+}
+
+/* Reverse flip: front -> back, then advance turn & load next card */
+function flipBack(){
+  if(!S.flipped || S.busy) return;
+  S.busy = true;
+
+  // rotate to the opposite edge (reverse direction)
+  cardEl.classList.add('to-edge-rev');
+
+  setTimeout(()=>{
+    // at edge: show back, jump to opposite edge, rotate home
+    cardEl.classList.remove('to-edge-rev','showing-front');
+    $('#cardFront').classList.remove('pravila-face');
+    $('#cardFront').innerHTML='';
+    cardEl.classList.add('from-edge-rev');
+    void cardEl.offsetWidth;
+    cardEl.classList.remove('from-edge-rev');
+  }, HALF);
+
+  setTimeout(()=>{
+    // now the back is home: advance turn and arm the next card
+    advanceTurn();
+    S.current=null;
+    S.flipped=false;
+    S.busy=false;
+    if(S.drawn >= S.total){
+      toast("Колода закончилась — тасуем заново 🔄");
+      buildDeck();
+      if(setupState && setupState.len!=="all"){
+        const cap=Math.min(+setupState.len, S.deck.length);
+        S.deck=S.deck.slice(0,cap); S.total=S.deck.length;
+      }
+    }
+    $('#capType').className='cc-type'; $('#capType').textContent='';
+    $('#capName').textContent = currentPlayerName() ? ("Ход: "+currentPlayerName()) : "Нажми на карту";
+      const th=$('#tapHint'); if(th){ th.textContent="Тапни по карте"; }
+  }, HALF*2 + 20);
+}
+
+cardEl.addEventListener('click', ()=>{
+  if(S.busy) return;
+  if(!S.flipped) flipCard();
+  else flipBack();
+});
+
+/* ---------------- CARD EFFECTS ---------------- */
+function handleCardEffect(key, def){
+  // Cards that go to a player's hand
+  if(def.type==="burn" || def.type==="permanent"){
+    if(def.pair){                 // Поцелуй
+      handleKiss(key);
+    } else if(def.pick){          // Связка
+      chooseForBond(key);
+    } else {                      // Щит, Гляделки, Подвох, Перерыв, Рыцарь
+      assignToCurrentPlayer(key);
+    }
+    return;
+  }
+  // Instant triggers
+  if(def.trigger==="clear_shields") clearAllShields();     // Подлянка
+  if(def.trigger==="steal") stealFromHand(key);            // Жулик
+}
+
+function currentPlayer(){ return S.players[S.turnIdx] || null; }
+function currentPlayerName(){ const p=currentPlayer(); return p?p.name:""; }
+
+
+/* ---------------- HAND MECHANICS ---------------- */
+function assignToCurrentPlayer(key){
+  const p = currentPlayer();
+  if(!p){ toast("Сначала добавь игроков"); return; }
+  addToHand(p, key);
+  toast(defFor(key).name + " → " + p.name);
+}
+
+function addToHand(player, key, extra){
+  const card = Object.assign({ uid: S.uidSeq++, key }, extra||{});
+  player.hand.push(card);
+  renderPlayers();
+  return card;
+}
+
+function removeFromHand(player, uid){
+  const i = player.hand.findIndex(c=>c.uid===uid);
+  if(i>=0){ const [c]=player.hand.splice(i,1); renderPlayers(); return c; }
+  return null;
+}
+
+/* Подлянка -> burn all shields */
+function clearAllShields(){
+  let n=0;
+  S.players.forEach(p=>{
+    const before=p.hand.length;
+    p.hand = p.hand.filter(c=>c.key!=="shchit");
+    n += before - p.hand.length;
+  });
+  renderPlayers();
+  toast(n ? ("Все щиты сгорели 🔥 (" + n + ")") : "Щитов на столе нет");
+}
+
+/* Жулик -> steal a card from someone's hand to current player */
+function stealFromHand(key){
+  const me = currentPlayer();
+  if(!me){ toast("Сначала добавь игроков"); return; }
+  // gather others' cards
+  const options=[];
+  S.players.forEach(p=>{
+    if(p.id===me.id) return;
+    p.hand.forEach(c=> options.push({player:p, card:c}));
+  });
+  if(options.length===0){
+    toast("У игроков нет карт — Жулик уходит в сброс");
+    return; // becomes ordinary
+  }
+  openChoose({
+    title:"ЖУЛИК",
+    hint:"Забери одну карту с руки любого игрока — она перейдёт к тебе ("+me.name+").",
+    items: options.map(o=>({
+      label:o.player.name,
+      sub: defFor(o.card.key).name,
+      onPick:()=>{
+        removeFromHand(o.player, o.card.uid);
+        addToHand(me, o.card.key);
+        closeSheets();
+        toast(defFor(o.card.key).name + ": " + o.player.name + " → " + me.name);
+      }
+    }))
+  });
+}
+
+/* Связка -> current player picks a partner; both get a permanent bond chip */
+function chooseForBond(key){
+  const me = currentPlayer();
+  if(!me){ toast("Сначала добавь игроков"); return; }
+  const others = S.players.filter(p=>p.id!==me.id);
+  if(others.length===0){ toast("Нужен второй игрок для связки"); return; }
+  openChoose({
+    title:"СВЯЗКА",
+    hint:"Выбери игрока, с которым будешь пить на пару до конца партии.",
+    items: others.map(p=>({
+      label:p.name,
+      sub:"пьёте вместе до конца",
+      onPick:()=>{
+        const bondId = S.uidSeq++; // shared bond marker
+        addToHand(me, "svyazka", {bond:bondId});
+        addToHand(p,  "svyazka", {bond:bondId});
+        closeSheets();
+        toast("Связка: " + me.name + " ↔ " + p.name);
+      }
+    }))
+  });
+}
+
+/* Поцелуй -> wait for the 2nd copy, then popup */
+function handleKiss(key){
+  const me = currentPlayer();
+  if(!me){ toast("Сначала добавь игроков"); return; }
+  if(S.pendingKiss && S.pendingKiss.playerId!==me.id){
+    // second kiss drawn -> match!
+    const first = S.players.find(p=>p.id===S.pendingKiss.playerId);
+    // remove waiting chip from first
+    if(first){
+      const idx=first.hand.findIndex(c=>c.key==="potseluy"&&c.waiting);
+      if(idx>=0) first.hand.splice(idx,1);
+    }
+    S.pendingKiss=null;
+    renderPlayers();
+    showKissPopup(first?first.name:"игрок", me.name);
+  } else {
+    // first kiss -> waiting chip
+    addToHand(me, "potseluy", {waiting:true});
+    S.pendingKiss = { playerId: me.id };
+    toast("Поцелуй ждёт пару…");
+  }
+}
+
+function showKissPopup(a,b){
+  $('#pairText').innerHTML = "<b>"+b+"</b> целуется с <b>"+a+"</b>.<br>Не хотите — оба пьёте дважды.";
+  $('#pairPopup').classList.add('show');
+}
+$('#pairOk').addEventListener('click', ()=> $('#pairPopup').classList.remove('show'));
+
+
+/* ---------------- PLAYERS UI ---------------- */
+function renderPlayers(){
+  const strip = $('#playerStrip');
+  strip.innerHTML='';
+  if(S.players.length===0){
+    strip.innerHTML='<div style="color:var(--muted-2);font-size:13px;padding:6px 0">Добавь игроков, чтобы отслеживать карты на руках</div>';
+    return;
+  }
+  S.players.forEach((p,idx)=>{
+    const chip=document.createElement('div');
+    chip.className='pchip'+(idx===S.turnIdx?' active-turn':'');
+    const hands = p.hand.map(c=>{
+      const def=defFor(c.key);
+      const cls='hand-icon'+(def.type==='permanent'?' permanent':'')+(c.waiting?' waiting':'');
+      return '<button class="'+cls+'" data-uid="'+c.uid+'" data-pid="'+p.id+'" title="'+def.name+'">'+
+        '<img src="'+ASSETS[c.key]+'"></button>';
+    }).join('');
+    chip.innerHTML =
+      (idx===S.turnIdx?'<span class="turn-dot"></span>':'')+
+      '<div class="pn">'+escapeHtml(p.name)+'</div>'+
+      '<div class="ph">'+hands+'</div>';
+    strip.appendChild(chip);
+  });
+  // bind hand icons
+  $$('#playerStrip .hand-icon').forEach(b=>{
+    b.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      openHandCard(+b.dataset.pid, +b.dataset.uid);
+    });
+  });
+}
+
+function openHandCard(pid, uid){
+  const p=S.players.find(x=>x.id===pid); if(!p) return;
+  const c=p.hand.find(x=>x.uid===uid); if(!c) return;
+  const def=defFor(c.key);
+  $('#handTitle').textContent=def.name;
+  $('#handOwner').textContent="На руках у: "+p.name;
+  $('#handText').textContent=def.text;
+  const burnBtn=$('#burnBtn'), note=$('#handPermNote');
+  if(def.type==='permanent'){
+    burnBtn.hidden=true; note.hidden=false;
+  } else {
+    burnBtn.hidden=false; note.hidden=true;
+    burnBtn.textContent="Сбросить «"+def.name+"»";
+    burnBtn.onclick=()=>{
+      removeFromHand(p, uid);
+      closeSheets();
+      toast(def.name+" сброшена 🔥");
+    };
+  }
+  openSheet('handSheet');
+}
+
+function advanceTurn(){
+  if(S.players.length>0){
+    if(typeof setupState!=="undefined" && setupState.order==="random" && S.players.length>1){
+      let n; do{ n=Math.floor(Math.random()*S.players.length); }while(n===S.turnIdx);
+      S.turnIdx=n;
+    } else {
+      S.turnIdx=(S.turnIdx+1)%S.players.length;
+    }
+    renderPlayers();
+  }
+}
+
+/* players editor */
+function renderPlayerRows(){
+  const wrap=$('#playerRows'); wrap.innerHTML='';
+  S.players.forEach((p,i)=>{
+    const row=document.createElement('div');
+    row.className='player-row';
+    row.innerHTML='<input value="'+escapeHtml(p.name)+'" data-i="'+i+'" placeholder="Имя игрока">'+
+      '<button class="del" data-i="'+i+'" aria-label="Удалить">✕</button>';
+    wrap.appendChild(row);
+  });
+  $$('#playerRows input').forEach(inp=>{
+    inp.addEventListener('input',()=>{ S.players[+inp.dataset.i].name=inp.value; });
+  });
+  $$('#playerRows .del').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      S.players.splice(+btn.dataset.i,1);
+      if(S.turnIdx>=S.players.length) S.turnIdx=0;
+      renderPlayerRows(); renderPlayers();
+    });
+  });
+}
+
+$('#addPlayer').addEventListener('click',()=>{
+  S.players.push({id:S.uidSeq++, name:"Игрок "+(S.players.length+1), hand:[]});
+  renderPlayerRows(); renderPlayers();
+});
+
+$('#editPlayers').addEventListener('click',()=>{ renderPlayerRows(); openSheet('playersSheet'); });
+
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+
+/* ---------------- CHOOSE SHEET ---------------- */
+function openChoose({title,hint,items}){
+  $('#chooseTitle').textContent=title;
+  $('#chooseHint').textContent=hint||'';
+  const list=$('#chooseList'); list.innerHTML='';
+  items.forEach(it=>{
+    const el=document.createElement('button');
+    el.className='choose-item';
+    el.innerHTML='<span>'+escapeHtml(it.label)+'</span>'+(it.sub?'<span class="sub">'+escapeHtml(it.sub)+'</span>':'');
+    el.addEventListener('click', it.onPick);
+    list.appendChild(el);
+  });
+  openSheet('chooseSheet');
+}
+
+/* ---------------- SHEETS PLUMBING ---------------- */
+const scrim=$('#scrim');
+function openSheet(id){
+  closeSheets(true);
+  $('#'+id).classList.add('show');
+  scrim.classList.add('show');
+}
+function closeSheets(keepScrim){
+  $$('.sheet').forEach(s=>s.classList.remove('show'));
+  if(!keepScrim) scrim.classList.remove('show');
+}
+scrim.addEventListener('click', ()=>closeSheets());
+$$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeSheets()));
+
+/* ---------------- TOAST ---------------- */
+let toastT;
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ---------------- RULES CONTENT ---------------- */
+function buildRules(){
+  const body=$('#rulesBody');
+  body.innerHTML =
+  '<div class="rules-block">'+
+    '<h3>Как играть</h3>'+
+    '<p>Понадобится крепкий алкоголь и рюмки на каждого. Перемешайте колоду, положите в центр стола рубашкой вверх. Жеребьёвкой выберите первого игрока.</p>'+
+    '<p>Каждый по очереди тянет верхнюю карту, кладёт рядом и выполняет задание. Покидать игру, передавать и меняться картами запрещено.</p>'+
+  '</div>'+
+  '<div class="rules-block">'+
+    '<h3>Три типа карт</h3>'+
+    '<ul class="rules-list">'+
+      '<li><b><span class="tag i">&nbsp;</span> Обычные</b><span>Используются сразу и уходят в сброс</span></li>'+
+      '<li><b><span class="tag b">&nbsp;</span> Сгораемые</b><span>Берутся на руки и сгорают после использования</span></li>'+
+      '<li><b><span class="tag p">&nbsp;</span> Несгораемые</b><span>Берутся на руки и остаются до конца игры</span></li>'+
+    '</ul>'+
+  '</div>'+
+  '<div class="rules-block">'+
+    '<h3>Карты на руках — в приложении</h3>'+
+    '<p>Сгораемые и несгораемые карты закрепляются за игроком: под его именем появляется значок карты. Тапни по значку, чтобы прочитать её и сбросить, когда используешь.</p>'+
+  '</div>'+
+  '<div class="rules-block">'+
+    '<h3>Особые механики</h3>'+
+    '<ul class="rules-list">'+
+      '<li><b>Связка</b><span>Выбираешь игрока — пьёте на пару до конца партии</span></li>'+
+      '<li><b>Поцелуй</b><span>Когда вторую такую карту вытянет другой игрок — целуетесь. Не хотите — оба пьёте дважды</span></li>'+
+      '<li><b>Подлянка</b><span>Все «Щит» на руках у игроков сгорают</span></li>'+
+      '<li><b>Жулик</b><span>Забираешь одну карту с руки любого игрока себе</span></li>'+
+      '<li><b>Семёрочка</b><span>Считаете по очереди, пропуская числа кратные 7 и с цифрой 7. Ошибся — пьёшь</span></li>'+
+      '<li><b>Перерыв</b><span>Ненадолго выходишь из игры. Нет карты — выходишь, выпив штрафную</span></li>'+
+      '<li><b>Идея</b><span>Придумываешь действие — его выполняют перед каждым глотком до конца игры</span></li>'+
+    '</ul>'+
+  '</div>'+
+  '<div class="rules-block">'+
+    '<h3>Штраф</h3>'+
+    '<p>Не хочешь выполнять задание — пьёшь штрафную. В этом вся суть.</p>'+
+  '</div>';
+}
+
+$('#openRules').addEventListener('click', ()=>openSheet('rulesSheet'));
+
+
+/* ---------------- AGE GATE -> SETUP ---------------- */
+$('#gateYes').addEventListener('click', ()=>{
+  $('#gate').style.opacity='0';
+  $('#gate').style.transition='opacity .35s';
+  setTimeout(()=>{
+    $('#gate').hidden=true;
+    openSetup();
+  },350);
+});
+$('#gateNo').addEventListener('click', ()=>{
+  document.body.innerHTML='<div style="min-height:100dvh;display:grid;place-items:center;padding:40px;text-align:center;color:#8a8a8a;font-family:Manrope,sans-serif"><div><div style="font-family:Montserrat;font-weight:900;font-size:64px;color:#fff;line-height:.8">18+</div><p style="margin-top:20px;font-size:15px;max-width:280px">Игра доступна только совершеннолетним. Возвращайся, когда тебе исполнится 18.</p></div></div>';
+});
+
+/* ---------------- SETUP SCREEN ---------------- */
+const setupState = { order:"circle", len:"all" };
+
+function openSetup(){
+  buildRules();
+  $('#setup').hidden=false;
+  if(S.players.length===0){
+    ['','',''].forEach((_,i)=>S.players.push({id:S.uidSeq++, name:"Игрок "+(i+1), hand:[]}));
+  }
+  renderSetupRows();
+}
+
+function renderSetupRows(){
+  const wrap=$('#setupRows'); wrap.innerHTML='';
+  S.players.forEach((p,i)=>{
+    const row=document.createElement('div');
+    row.className='player-row'; row.draggable=true; row.dataset.i=i;
+    row.innerHTML='<span class="drag">⠿</span>'+
+      '<input value="'+escapeHtml(p.name)+'" data-i="'+i+'" placeholder="Имя игрока '+(i+1)+'">'+
+      '<button class="del" data-i="'+i+'" aria-label="Удалить">✕</button>';
+    wrap.appendChild(row);
+  });
+  $$('#setupRows input').forEach(inp=>{
+    inp.addEventListener('input',()=>{ S.players[+inp.dataset.i].name=inp.value; });
+  });
+  $$('#setupRows .del').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(S.players.length<=1){ toast("Нужен хотя бы один игрок"); return; }
+      S.players.splice(+btn.dataset.i,1);
+      renderSetupRows();
+    });
+  });
+  enableDragReorder(wrap);
+}
+
+function enableDragReorder(wrap){
+  let dragEl=null;
+  wrap.querySelectorAll('.player-row').forEach(row=>{
+    row.addEventListener('dragstart',()=>{dragEl=row;row.classList.add('dragging');});
+    row.addEventListener('dragend',()=>{
+      row.classList.remove('dragging');
+      // rebuild order from DOM
+      const order=Array.from(wrap.querySelectorAll('.player-row')).map(r=>+r.dataset.i);
+      S.players=order.map(i=>S.players[i]);
+      renderSetupRows();
+    });
+    row.addEventListener('dragover',e=>{
+      e.preventDefault();
+      const after=getDragAfter(wrap,e.clientY);
+      if(!dragEl) return;
+      if(after==null) wrap.appendChild(dragEl);
+      else wrap.insertBefore(dragEl,after);
+    });
+  });
+}
+function getDragAfter(wrap,y){
+  const els=[...wrap.querySelectorAll('.player-row:not(.dragging)')];
+  return els.reduce((closest,child)=>{
+    const box=child.getBoundingClientRect();
+    const offset=y-box.top-box.height/2;
+    if(offset<0 && offset>closest.offset) return {offset,element:child};
+    return closest;
+  },{offset:-Infinity,element:null}).element;
+}
+
+$('#setupAdd').addEventListener('click',()=>{
+  S.players.push({id:S.uidSeq++, name:"Игрок "+(S.players.length+1), hand:[]});
+  renderSetupRows();
+});
+$('#setupRules').addEventListener('click',()=>openSheet('rulesSheet'));
+
+// segmented controls
+$('#segOrder').addEventListener('click',e=>{
+  const b=e.target.closest('.seg-btn'); if(!b) return;
+  $$('#segOrder .seg-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); setupState.order=b.dataset.val;
+});
+$('#segLen').addEventListener('click',e=>{
+  const b=e.target.closest('.seg-btn'); if(!b) return;
+  $$('#segLen .seg-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); setupState.len=b.dataset.val;
+});
+
+$('#startBtn').addEventListener('click',()=>{
+  // ensure names non-empty
+  S.players.forEach((p,i)=>{ if(!p.name.trim()) p.name="Игрок "+(i+1); });
+  if(S.players.length<1){ toast("Добавь хотя бы одного игрока"); return; }
+  $('#setup').hidden=true;
+  $('#app').hidden=false;
+  startGame();
+});
+
+/* ---------------- INIT ---------------- */
+function startGame(){
+  buildDeck();
+  // apply game length cap
+  if(setupState.len!=="all"){
+    const cap=Math.min(+setupState.len, S.deck.length);
+    S.deck = S.deck.slice(0,cap);
+    S.total = S.deck.length;
+  }
+  // apply order
+  if(setupState.order==="random") S.turnIdx=Math.floor(Math.random()*S.players.length);
+  else S.turnIdx=0;
+  updateProgress();
+  renderPlayers();
+  dealNewCard();
+}
+})();
+</script>
+</body>
+</html>
