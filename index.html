@@ -163,20 +163,17 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
 /* Smooth true card flip. Forward: 0 -> 90 (swap) -> 0.
    Reverse: 0 -> -90 (swap) -> 0. Linear-ish easing = real rotation feel. */
 .card{position:relative;width:100%;height:100%;cursor:pointer;
+  -webkit-transform-style:preserve-3d;transform-style:preserve-3d;
   transform:rotateY(0deg);
-  transition:transform var(--half) cubic-bezier(.42,0,.58,1)}
-.card.to-edge{transform:rotateY(90deg)}
-.card.to-edge-rev{transform:rotateY(-90deg)}
-.card.from-edge{transition:none;transform:rotateY(-90deg)}
-.card.from-edge-rev{transition:none;transform:rotateY(90deg)}
+  transition:transform var(--flip) cubic-bezier(.42,0,.58,1)}
+.card.showing-front{transform:rotateY(180deg)}
 .card.fade-in{animation:cardIn .4s ease both}
 @keyframes cardIn{from{opacity:0}to{opacity:1}}
-.face{position:absolute;inset:0;border-radius:22px;overflow:hidden}
+.face{position:absolute;inset:0;border-radius:22px;overflow:hidden;
+  -webkit-backface-visibility:hidden;backface-visibility:hidden}
 .face img{width:100%;height:100%;object-fit:cover;display:block}
-.card-back{display:block}
-.card-front{display:none}
-.card.showing-front .card-back{display:none}
-.card.showing-front .card-front{display:block}
+.card-back{-webkit-transform:rotateY(0deg);transform:rotateY(0deg)}
+.card-front{-webkit-transform:rotateY(180deg);transform:rotateY(180deg)}
 
 /* Правила card rendered in CSS */
 .pravila-face{background:var(--ink);color:#000;display:flex;flex-direction:column;
@@ -671,7 +668,8 @@ function typeLabel(type){
 /* ---------------- DRAW / FLIP FLOW ---------------- */
 const cardEl = $('#card');
 
-const HALF = 340; // ms, matches --half
+const HALF = 310; // ms, mid-point of the flip (reveal/clear swap)
+const FLIP_MS = 620; // ms, matches --flip 0.62s (full rotation)
 
 /* Prepare the next card (back facing up), no animation jump */
 function dealNewCard(){
@@ -703,18 +701,11 @@ function flipCard(){
   S.drawn++;
   S.current = { key, def: defFor(key) };
 
-  // rotate to edge
-  cardEl.classList.add('to-edge');
-
-  setTimeout(()=>{
-    // at edge: swap face, jump to opposite edge without transition, then rotate home
-    renderFront(key);
-    cardEl.classList.remove('to-edge');
-    cardEl.classList.add('showing-front','from-edge');
-    void cardEl.offsetWidth;          // commit the jump
-    cardEl.classList.remove('from-edge');
-    S.flipped = true;
-  }, HALF);
+  // true 3D flip: render front on the hidden back-face, then rotate 180
+  renderFront(key);
+  void cardEl.offsetWidth;
+  requestAnimationFrame(()=>{ cardEl.classList.add('showing-front'); });
+  S.flipped = true;
 
   setTimeout(()=>{
     const d = S.current.def;
@@ -730,7 +721,7 @@ function flipCard(){
     } else {
       handleCardEffect(key, d);
     }
-  }, HALF*2 + 20);
+  }, FLIP_MS + 20);
 }
 
 /* Reverse flip: front -> back, then advance turn & load next card */
@@ -738,17 +729,11 @@ function flipBack(){
   if(!S.flipped || S.busy) return;
   S.busy = true;
 
-  // rotate to the opposite edge (reverse direction)
-  cardEl.classList.add('to-edge-rev');
-
+  // true 3D flip back: rotate 180 -> 0, clear front once it faces away
+  cardEl.classList.remove('showing-front');
   setTimeout(()=>{
-    // at edge: show back, jump to opposite edge, rotate home
-    cardEl.classList.remove('to-edge-rev','showing-front');
     $('#cardFront').classList.remove('pravila-face');
     $('#cardFront').innerHTML='';
-    cardEl.classList.add('from-edge-rev');
-    void cardEl.offsetWidth;
-    cardEl.classList.remove('from-edge-rev');
   }, HALF);
 
   setTimeout(()=>{
@@ -768,7 +753,7 @@ function flipBack(){
     $('#capType').className='cc-type'; $('#capType').textContent='';
     $('#capName').textContent = currentPlayerName() ? ("Ход: "+currentPlayerName()) : "Нажми на карту";
       const th=$('#tapHint'); if(th){ th.textContent="Тапни по карте"; }
-  }, HALF*2 + 20);
+  }, FLIP_MS + 20);
 }
 
 cardEl.addEventListener('click', ()=>{
